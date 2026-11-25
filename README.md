@@ -18,6 +18,12 @@ Buka http://localhost:8080. Alternatif: buka `dist/index.html` langsung di brows
 
 Gunakan `dist` sebagai direktori publik atau publish directory. Tidak ada perintah build. Unggah seluruh isi `dist`, termasuk subdirektori `assets`, ke hosting.
 
+### Vercel
+
+Konfigurasi `vercel.json` di root repo mengarahkan deployment ke folder `dist`. Gunakan Root Directory `.` (root repo) dan Framework Preset **Other**. Build Command dan Install Command dikosongkan karena berkas statis sudah tersedia. Output Directory ditetapkan ke `dist` oleh konfigurasi repo. Push ke branch `main` akan memicu deployment baru jika integrasi Git Vercel diaktifkan.
+
+Jika seluruh halaman menampilkan 404, pastikan deployment terbaru menggunakan commit yang memuat `vercel.json`. Beranda berada di `dist/index.html`, bukan di root repo. Jangan menambahkan rewrite semua URL ke satu halaman: aplikasi ini memiliki dua halaman HTML beserta aset statisnya.
+
 ## Fitur
 
 - Beranda PNS, panduan penggunaan, dan FAQ dengan tautan membuat rute di On The Go Map.
