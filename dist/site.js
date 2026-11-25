@@ -1,0 +1,7 @@
+(() => {
+const root=document.documentElement;
+const tool=!!document.getElementById('paceVar');
+function paint(){const dark=root.dataset.theme==='dark';document.getElementById('iconSun').style.display=dark?'block':'none';document.getElementById('iconMoon').style.display=dark?'none':'block';}
+if(!tool){let t;try{t=localStorage.getItem('pns-theme')}catch(e){}root.dataset.theme=t||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');paint();document.getElementById('themeToggle').addEventListener('click',()=>{root.dataset.theme=root.dataset.theme==='dark'?'light':'dark';try{localStorage.setItem('pns-theme',root.dataset.theme)}catch(e){}paint()})}
+const menu=document.getElementById('menuToggle'),nav=document.querySelector('.site-header nav');menu.addEventListener('click',()=>{const open=menu.getAttribute('aria-expanded')!=='true';menu.setAttribute('aria-expanded',String(open));menu.setAttribute('aria-label',open?'Tutup menu':'Buka menu');nav.classList.toggle('open',open)});nav.addEventListener('click',e=>{if(e.target.closest('a')){menu.setAttribute('aria-expanded','false');nav.classList.remove('open')}});document.addEventListener('keydown',e=>{if(e.key==='Escape'){menu.setAttribute('aria-expanded','false');nav.classList.remove('open')}});
+})();

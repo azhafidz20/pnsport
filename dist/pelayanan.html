@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <title>PNS — Ruang Pelayanan</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏃</text></svg>"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <link rel="stylesheet" href="tool.css?v=3"/>
+<link rel="stylesheet" href="site.css?v=3"/><link rel="stylesheet" href="preview.css?v=3"/><meta name="description" content="Ruang Pelayanan PNS: buat simulasi TCX lari dari rute GPX dengan profil Amazfit Active Edge."/></head>
+<body>
+
+<!-- HEADER -->
+<a class="skip-link" href="#main">Lewati navigasi</a><header class="site-header"><div class="nav-wrap"><a class="brand" href="index.html" aria-label="PNS Pegawai Negeri Strava — Beranda"><span class="brand-symbol" role="img" aria-label="Logo pelari PNS"></span><span><strong>PNS<span class="brand-dot">.</span></strong><small>Pegawai Negeri Strava</small></span></a><nav aria-label="Navigasi utama"><a  href="index.html">Beranda</a><a aria-current="page" href="pelayanan.html">Ruang Pelayanan</a><a href="index.html#informasi">Pusat Informasi</a></nav><button class="theme-button" id="themeToggle" aria-label="Ganti tema terang atau gelap" title="Ganti tema"><svg id="iconMoon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13Z"/></svg><svg id="iconSun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="display:none"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg></button><button class="menu-button" id="menuToggle" aria-label="Buka menu" aria-expanded="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button></div></header>
+
+<div class="tool-heading"><div><a class="breadcrumb" href="index.html">Beranda / Ruang Pelayanan</a><p class="eyebrow">PELAYANAN SIMULASI AKTIVITAS</p><h1>Rute kamu. Pace kamu.</h1><p>Unggah GPX, atur simulasi larimu, lalu unduh file TCX.</p></div><span class="device-chip">Amazfit Active Edge</span></div><main class="main-layout" id="main">
+  <!-- KOLOM KIRI -->
+  <div class="col-left"><a class="preview-jump" href="#summaryCard">Lihat pratinjau aktivitas</a>
+
+    <!-- RUTE LARI -->
+    <section class="card route-card" id="sectionGpx">
+      <div class="card-header">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <h2>Rute lari</h2>
+      </div>
+
+      <div class="drop-zone" id="dropZone" tabindex="0" role="button" aria-label="Unggah file GPX">
+        <input type="file" id="gpxInput" accept=".gpx" style="display:none"/>
+        <div class="drop-inner" id="dropInner">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <span class="drop-title">Unggah file GPX</span>
+          <span class="drop-sub">Pilih file atau tarik ke sini</span>
+        </div>
+      </div>
+
+      <div class="gpx-info" id="gpxInfo" style="display:none">
+        <div class="gpx-file-row">
+          <div class="gpx-file-name">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span id="gpxFileName">-</span>
+          </div>
+          <div class="gpx-status">
+            <span class="badge badge-ok" id="gpxBadge">✓</span>
+            <button class="btn-link" id="btnChangeGpx">↺ Ganti file</button>
+          </div>
+        </div>
+        <div class="gpx-stats">
+          <span>📍 <span id="gpxPoints">-</span> titik</span>
+          <span>📏 <span id="gpxDist">-</span> km</span>
+          <span>🔀 <span id="gpxSegs">-</span> segmen</span>
+        </div>
+      </div>
+
+      <p class="route-help">Belum punya GPX? <a href="https://onthegomap.com/#/create" target="_blank" rel="noopener noreferrer">Buat rute di On The Go Map</a>, ekspor sebagai GPX, lalu unggah di sini.</p>
+      <div class="validation-msg error" id="gpxError" style="display:none"></div>
+    </section>
+
+    <!-- PACE & SPLIT -->
+    <section class="card pace-card">
+      <div class="card-header">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <h2>Pace &amp; split</h2>
+      </div>
+
+      <div class="form-group">
+        <label>Pace rata-rata</label>
+        <div class="pace-input-row">
+          <div class="pace-input-box">
+            <input type="number" id="paceMin" min="3" max="20" value="7" class="pace-num"/>
+            <span class="pace-sep">:</span>
+            <input type="number" id="paceSec" min="0" max="59" value="25" class="pace-num"/>
+          </div>
+          <span class="pace-unit">/km</span>
+        </div>
+        <div class="form-hint">Durasi otomatis mengikuti jarak dan pace.</div>
+      </div>
+
+      <div class="form-group">
+        <div class="slider-label-row">
+          <label>Variasi pace</label>
+          <span class="slider-val" id="varLabel">8%</span>
+        </div>
+        <input type="range" id="paceVar" min="0" max="30" value="8" class="slider"/>
+        <div class="slider-hint">Semakin besar, semakin bervariasi.</div>
+      </div>
+
+      <div class="form-group">
+        <div class="slider-label-row">
+          <label>Split pace</label>
+          <span class="slider-val" id="splitLabel">−10%</span>
+        </div>
+        <input type="range" id="paceSplit" min="-30" max="30" value="-10" class="slider"/>
+        <div class="slider-hint-row">
+          <span>Negatif · makin cepat</span>
+          <span>|</span>
+          <span>Rata</span>
+          <span>|</span>
+          <span>Positif · makin lambat</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="card profile-card">
+      <div class="card-header"><h2>Profil &amp; estimasi kalori</h2></div>
+      <div class="form-row"><div class="form-group"><label for="weightKg">Berat badan acuan</label><div class="input-unit-wrap"><input id="weightKg" type="number" value="70" min="25" max="300" step="0.1"><span class="unit">kg</span></div></div><div class="form-group"><label for="age">Usia</label><div class="input-unit-wrap"><input id="age" type="number" value="30" min="18" max="100" step="1"><span class="unit">tahun</span></div></div></div>
+      <div class="form-group"><label for="sex">Jenis kelamin untuk estimasi</label><select id="sex"><option value="">Tidak ditentukan</option><option value="m">Laki-laki</option><option value="f">Perempuan</option></select></div>
+      <p class="form-hint">70 kg dan 30 tahun adalah contoh awal. Ubah sesuai profilmu. Kalori tetap dihitung saat HR dimatikan.</p>
+      <details class="method-help"><summary>Cara estimasi kalori</summary><p>Tanpa pilihan jenis kelamin atau saat HR dimatikan, estimasi memakai MET berdasarkan pace, berat badan, dan durasi. Jika HR aktif serta jenis kelamin dipilih, usia dan profil digunakan dalam rumus HR Keytel.</p><p>Angka ini estimasi energi total untuk simulasi, bukan pengukuran tubuh atau perhitungan resmi Strava.</p><p><a href="https://pacompendium.com/running/" target="_blank" rel="noopener">Acuan MET</a> · <a href="https://pubmed.ncbi.nlm.nih.gov/15966347/" target="_blank" rel="noopener">Riset estimasi HR</a></p></details>
+    </section>
+    <section class="card sensor-card">
+      <div class="card-header"><h2>Detak jantung &amp; cadence</h2><span class="optional-label">Opsional</span></div>
+      <label class="sensor-toggle" for="hrEnabled"><span><strong>Gunakan detak jantung</strong><small>Sertakan HR di pratinjau dan TCX.</small></span><input type="checkbox" id="hrEnabled" role="switch" checked></label>
+      <fieldset id="hrFields"><legend class="sr-only">Pengaturan detak jantung</legend><div class="form-row three-col"><div class="form-group"><label for="hrMin">HR minimum</label><div class="input-unit-wrap"><input type="number" id="hrMin" value="142" min="40" max="220"><span class="unit">bpm</span></div></div><div class="form-group"><label for="hrAvg">HR rata-rata</label><div class="input-unit-wrap"><input type="number" id="hrAvg" value="158" min="40" max="220"><span class="unit">bpm</span></div></div><div class="form-group"><label for="hrMax">HR maksimum</label><div class="input-unit-wrap"><input type="number" id="hrMax" value="175" min="40" max="220"><span class="unit">bpm</span></div></div></div></fieldset>
+      <label class="sensor-toggle" for="cadEnabled"><span><strong>Gunakan cadence</strong><small>Sertakan langkah per menit di pratinjau dan TCX.</small></span><input type="checkbox" id="cadEnabled" role="switch" checked></label>
+      <fieldset id="cadFields"><legend class="sr-only">Pengaturan cadence</legend><div class="form-group"><label for="cadAvg">Cadence rata-rata</label><div class="input-unit-wrap"><input type="number" id="cadAvg" value="165" min="100" max="250"><span class="unit">langkah/menit</span></div><p class="form-hint">Total langkah kedua kaki.</p></div></fieldset>
+      <div class="validation-msg error" id="hrError" role="alert" style="display:none"></div>
+    </section>
+
+  </div><!-- /col-left -->
+
+  <!-- KOLOM KANAN -->
+  <div class="col-right">
+    <!-- DETAIL AKTIVITAS -->
+    <section class="card detail-card" id="activityDetails">
+      <div class="card-header">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>
+        <h2>Detail aktivitas</h2>
+      </div>
+
+      <div class="form-group">
+        <label for="runName">Nama lari</label>
+        <input type="text" id="runName" value="Lari Pagi" maxlength="100" placeholder="Nama aktivitas lari"/>
+      </div>
+      <div class="form-group">
+        <label for="runDesc">Deskripsi</label>
+        <textarea id="runDesc" rows="2" placeholder="Tambahkan catatan aktivitas…" maxlength="500"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="runDate">Tanggal</label>
+          <div class="input-icon-wrap">
+            <input type="date" id="runDate"/>
+            <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="runTime">Waktu mulai</label>
+          <div class="input-time-wrap">
+            <div class="input-icon-wrap">
+              <input type="time" id="runTime" value="07:30"/>
+              <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <span class="tz-badge">WIB</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Perangkat</label>
+        <div class="device-group">
+          <label class="device-option active" id="devAmazfit">
+            <input type="radio" name="device" value="amazfit" id="radioAmazfit" checked/>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18"/></svg>
+            Amazfit Active Edge
+          </label>
+        </div>
+      </div>
+    </section>
+
+
+
+    <section class="activity-preview" id="summaryCard" aria-label="Strava Preview simulasi">
+      <div class="preview-bar"><h2><button type="button" id="previewToggle" aria-expanded="true" aria-controls="previewBody"><span>STRAVA PREVIEW</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></h2></div><div id="previewBody">
+      <div class="preview-runner"><span class="runner-avatar" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="7" r="4"/><path d="M4 22v-3a8 8 0 0 1 16 0v3Z"/></svg></span><div><strong>Runner</strong><small id="previewDate">Atur tanggal &amp; waktu di atas</small></div></div>
+      <h3 class="preview-name" id="previewName">Lari Pagi</h3>
+      <div id="mapContainer" class="map-container">
+        <div id="mapEmpty" class="map-empty">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".3"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <p>Unggah file GPX untuk melihat rute</p>
+        </div>
+        <div id="map" style="width:100%;height:280px;display:none;border-radius:8px;overflow:hidden;"></div>
+        <div id="mapFallback" style="display:none;width:100%;height:280px;position:relative;border-radius:8px;overflow:hidden;background:var(--map-bg);">
+          <canvas id="mapCanvas" style="width:100%;height:100%;"></canvas>
+          <div style="position:absolute;bottom:6px;right:8px;font-size:11px;opacity:.6;background:var(--bg-card);padding:2px 6px;border-radius:4px;">Peta offline</div>
+        </div>
+      </div>
+
+      <div id="summaryEmpty" class="preview-empty"><p>Unggah GPX untuk melihat rute, estimasi kalori, split, dan detail setiap jarak.</p></div>
+      <div id="summaryContent" style="display:none">
+        <div class="preview-stats"><div><span>Jarak</span><strong id="sumDist">—</strong></div><div><span>Pace rata-rata</span><strong id="sumPace">—</strong></div><div><span>Waktu bergerak</span><strong id="sumDur">—</strong></div><div><span>Total tanjakan</span><strong id="sumGain">—</strong></div><div><span>Estimasi kalori</span><strong id="sumCalories">—</strong></div><div data-hr><span>HR rata-rata</span><strong id="sumHrAvg">—</strong></div><div data-cad><span>Cadence rata-rata</span><strong id="sumCad">—</strong></div></div>
+        <p class="calorie-method" id="calorieMethod"></p><div class="preview-device"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="6" y="5" width="12" height="14" rx="5"/><path d="m9 5 1-4h4l1 4m-6 14 1 4h4l1-4"/></svg>Amazfit Active Edge<span id="sumFinish"></span></div>
+<div class="preview-section"><h3>SPLITS</h3><div class="preview-table-wrap"><table class="preview-splits"><thead><tr><th>Km</th><th colspan="2">Pace</th><th>Δ elev.</th><th data-hr>HR</th></tr></thead><tbody id="splitTableBody"></tbody></table></div><p class="preview-help">Δ elev. = beda ketinggian akhir dan awal split.</p></div>
+        <div class="preview-section chart-section"><h3>PACE</h3><div class="chart-frame"><canvas tabindex="0" id="chartPace" height="190" role="img" aria-label="Grafik pace menurut jarak"></canvas><span class="chart-crosshair" hidden aria-hidden="true"><i></i></span><div class="chart-tooltip" id="chartPaceTooltip" role="tooltip" hidden></div></div><div class="preview-row"><span>Pace rata-rata</span><strong id="paceAvgDetail"></strong></div><div class="preview-row"><span>Waktu bergerak</span><strong id="movingDetail"></strong></div><div class="preview-row"><span>Split tercepat</span><strong id="fastestSplit"></strong></div></div>
+        <div class="preview-section chart-section" id="elevationSection"><h3>ELEVASI</h3><div class="chart-frame"><canvas tabindex="0" id="chartElevation" height="190" role="img" aria-label="Grafik elevasi dari GPX menurut jarak"></canvas><span class="chart-crosshair" hidden aria-hidden="true"><i></i></span><div class="chart-tooltip" id="chartElevationTooltip" role="tooltip" hidden></div></div><div class="preview-row"><span>Total tanjakan</span><strong id="gainDetail"></strong></div><div class="preview-row"><span>Total turunan</span><strong id="lossDetail"></strong></div></div>
+        <div class="preview-section chart-section" data-hr><h3>HEART RATE</h3><div class="chart-frame"><canvas tabindex="0" id="chartHr" height="190" role="img" aria-label="Grafik detak jantung simulasi menurut jarak"></canvas><span class="chart-crosshair" hidden aria-hidden="true"><i></i></span><div class="chart-tooltip" id="chartHrTooltip" role="tooltip" hidden></div></div><div class="preview-row"><span>HR rata-rata</span><strong id="hrAvgDetail"></strong></div><div class="preview-row"><span>HR maksimum</span><strong id="hrMaxDetail"></strong></div></div>
+        <div class="preview-section chart-section" data-cad><h3>CADENCE</h3><div class="chart-frame"><canvas tabindex="0" id="chartCadence" height="190" role="img" aria-label="Grafik cadence simulasi menurut jarak"></canvas><span class="chart-crosshair" hidden aria-hidden="true"><i></i></span><div class="chart-tooltip" id="chartCadenceTooltip" role="tooltip" hidden></div></div><div class="preview-row"><span>Cadence rata-rata</span><strong id="cadAvgDetail"></strong></div><div class="preview-row"><span>Cadence maksimum</span><strong id="cadMaxDetail"></strong></div></div>
+        <div class="preview-disclaimer">Pratinjau PNS bergaya Strava. Hasil impor dan perhitungan di Strava dapat berbeda.</div>
+      </div>
+      </div><!-- /previewBody -->
+    </section>
+
+    <!-- TOMBOL UNDUH -->
+    <section class="card action-card">
+      <button class="btn-primary" id="btnDownload" disabled>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Unduh file TCX
+      </button>
+      <button class="btn-secondary" id="btnReshuffle" disabled>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg>
+        Acak ulang variasi
+      </button>
+      <p class="action-hint">Data performa dibuat sebagai simulasi.</p>
+    </section>
+
+  </div><!-- /col-right -->
+</main>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<footer class="site-footer"><div class="footer-inner"><a class="footer-brand" href="index.html">PNS<span>.</span> <small>Pegawai Negeri Strava</small></a><p>Mengabdi untuk Pace dan Speed.</p><span>© 2026 PNS</span></div></footer><script src="app.js?v=4"></script><script src="site.js"></script>
+</body>
+</html>
