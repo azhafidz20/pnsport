@@ -825,6 +825,7 @@ function loadGpxFile(file) {
     }
     state.gpx = result;
     showGpxInfo(file.name, result);
+    window.PNSPortal?.saveRoute({filename:file.name,distance:result.totalDist,points:result.allPts.length}).catch(error=>{const message=document.getElementById('downloadStatus');message.textContent='Rute siap, tetapi riwayat belum tersimpan: '+error.message;message.hidden=false;});
     renderMap(result);
     state.varianceSeed = Math.random();
     scheduleUpdate();
@@ -1299,7 +1300,8 @@ function initDownload() {
     const tcxStr = generateTCX(state.sim, settings);
     const safeName = settings.runName.replace(/[^a-zA-Z0-9_\- ]/g, '').trim() || 'PNS — Pegawai Negeri Strava';
     const filename = `${safeName}.tcx`;
-    downloadBlob(new Blob([tcxStr], { type: 'application/xml' }), filename);
+    const blob = new Blob([tcxStr], { type: 'application/xml' });
+    window.PNSPortal.requestDownload({filename,name:settings.runName,distance:state.sim.stats.totalDist,pace:state.sim.stats.avgPaceSecPerKm,duration:state.sim.stats.totalDurSec,routeName:document.getElementById('gpxFileName').textContent},()=>downloadBlob(blob,filename));
   });
 
   document.getElementById('btnReshuffle').addEventListener('click', () => {

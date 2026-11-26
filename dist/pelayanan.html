@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" data-pns-private>
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
@@ -7,7 +7,7 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏃</text></svg>"/>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <link rel="stylesheet" href="tool.css?v=3"/>
-<link rel="stylesheet" href="site.css?v=5"/><link rel="stylesheet" href="preview.css?v=5"/><meta name="description" content="Ruang Pelayanan PNS: buat simulasi TCX lari dari rute GPX dengan profil Amazfit Active Edge."/></head>
+<link rel="stylesheet" href="site.css?v=5"/><link rel="stylesheet" href="preview.css?v=5"/><meta name="description" content="Ruang Pelayanan PNS: buat simulasi TCX lari dari rute GPX dengan profil Amazfit Active Edge."/><link rel="stylesheet" href="portal.css?v=1"><script src="portal.js?v=1"></script></head>
 <body>
 
 <!-- HEADER -->
@@ -204,19 +204,23 @@
     <section class="card action-card">
       <button class="btn-primary" id="btnDownload" disabled>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Unduh file TCX
+        Lanjutkan Unduh TCX
       </button>
       <button class="btn-secondary" id="btnReshuffle" disabled>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg>
         Acak ulang variasi
       </button>
-      <p class="action-hint">Data performa dibuat sebagai simulasi.</p>
+      <p class="action-price"><strong>Rp5.000 / unduhan</strong><span>atau gunakan voucher</span></p><p class="action-hint">Pembayaran versi demo. Tidak ada uang yang ditagihkan.</p><p class="portal-status" id="downloadStatus" role="status" hidden></p>
     </section>
 
   </div><!-- /col-right -->
 </main>
 
+<dialog id="paymentDialog" class="portal-dialog payment-dialog" aria-labelledby="paymentTitle" aria-describedby="paymentDescription"><div class="dialog-heading"><span class="demo-chip">PEMBAYARAN DEMO</span><button type="button" class="dialog-close" id="closePayment" aria-label="Tutup pembayaran">×</button></div><h2 id="paymentTitle">Satu langkah lagi.</h2><p id="paymentDescription" class="portal-muted">Konfirmasi pembayaran demo atau gunakan voucher. File TCX langsung diunduh setelah berhasil.</p><div class="order-summary"><div><strong id="orderName"></strong><span id="orderDistance"></span></div><div><small>1 unduhan TCX</small><strong id="orderTotal">Rp5.000</strong></div></div><p class="order-reference" id="orderReference"></p>
+<div class="payment-tabs" role="tablist" aria-label="Metode pembayaran" id="paymentTabs"><button type="button" role="tab" id="qrTab" aria-controls="qrPanel" aria-selected="true" data-pay-method="qr">QR Demo</button><button type="button" role="tab" id="voucherTab" aria-controls="voucherPanel" aria-selected="false" tabindex="-1" data-pay-method="voucher">Pakai Voucher</button></div>
+<section role="tabpanel" aria-labelledby="qrTab" id="qrPanel"><div class="qr-demo-wrap"><img id="demoQr" src="assets/qr-demo-1.svg" width="184" height="184" alt="QR contoh, bukan kode pembayaran"><strong>QR SIMULASI</strong></div><p class="payment-demo-note">Jangan transfer uang. QR ini berisi teks demo dan tidak dapat menerima pembayaran.</p><button type="button" id="confirmQr" class="portal-button primary">Simulasikan Pembayaran Berhasil</button></section>
+<section role="tabpanel" aria-labelledby="voucherTab" id="voucherPanel" hidden><form id="voucherForm" class="portal-form"><label>Kode voucher<input id="voucherCode" name="voucher" required maxlength="40" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Masukkan kode voucher"></label><p class="portal-muted">Voucher valid menggantikan biaya satu unduhan ini.</p><button type="submit" id="confirmVoucher" class="portal-button primary">Gunakan Voucher dan Unduh</button></form><details class="voucher-examples"><summary>Lihat voucher contoh</summary><p><code>PNSCOBA5000</code> atau <code>PNSSAHABAT</code></p><p>Masing-masing berlaku satu kali per akun demo di browser ini.</p></details></section><p class="portal-status" id="paymentStatus" role="alert" hidden></p><p class="payment-footnote">Belum ada transaksi uang atau verifikasi pembayaran sungguhan.</p></dialog>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<footer class="site-footer footer-expanded"><div class="footer-inner"><div class="footer-identity"><a class="footer-brand" href="index.html">PNS<span>.</span> <small>Pegawai Negeri Strava</small></a><p>Mengabdi untuk Pace dan Speed.</p><p class="footer-note">PNS merupakan layanan independen dan tidak berafiliasi dengan Strava.</p></div><div class="footer-information"><h2>Informasi</h2><nav aria-label="Informasi PNS"><a href="index.html#tentang">Tentang PNS</a><a href="index.html#informasi">Pusat Bantuan</a><span>Kebijakan Privasi <small>Segera hadir</small></span><span>Syarat dan Ketentuan <small>Segera hadir</small></span><span>Hubungi Kami <small>Segera hadir</small></span></nav></div></div><div class="footer-bottom">© 2026 PNS. All rights reserved.</div></footer><script src="app.js?v=5"></script><script src="site.js"></script>
+<footer class="site-footer footer-expanded"><div class="footer-inner"><div class="footer-identity"><a class="footer-brand" href="index.html">PNS<span>.</span> <small>Pegawai Negeri Strava</small></a><p>Mengabdi untuk Pace dan Speed.</p><p class="footer-note">PNS merupakan layanan independen dan tidak berafiliasi dengan Strava.</p></div><div class="footer-information"><h2>Informasi</h2><nav aria-label="Informasi PNS"><a href="index.html#tentang">Tentang PNS</a><a href="index.html#informasi">Pusat Bantuan</a><span>Kebijakan Privasi <small>Segera hadir</small></span><span>Syarat dan Ketentuan <small>Segera hadir</small></span><span>Hubungi Kami <small>Segera hadir</small></span></nav></div></div><div class="footer-bottom">© 2026 PNS. All rights reserved.</div></footer><script src="app.js?v=6"></script><script src="site.js"></script>
 </body>
 </html>

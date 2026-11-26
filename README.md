@@ -6,13 +6,13 @@ Website statis dengan halaman beranda dan generator simulasi aktivitas lari berb
 
 ## Jalankan secara lokal
 
-Tidak memerlukan instalasi paket, backend, database, atau akun. Dari direktori proyek, jalankan:
+Tidak memerlukan instalasi paket, backend, atau database. Akses generator memakai akun demo lokal. Dari direktori proyek, jalankan:
 
 ```sh
 python3 -m http.server 8080 --directory dist
 ```
 
-Buka http://localhost:8080. Alternatif: buka `dist/index.html` langsung di browser. Peta online memerlukan internet; gambar rute offline digunakan jika Leaflet tidak tersedia.
+Buka http://localhost:8080. Gunakan HTTP localhost atau HTTPS agar Web Crypto dan penyimpanan akun demo tersedia; jangan membuka file HTML melalui `file://`. Peta online memerlukan internet; gambar rute offline digunakan jika Leaflet tidak tersedia.
 
 ## Deploy ke hosting statis
 
@@ -44,12 +44,36 @@ Saat **pace mengikuti elevasi** diaktifkan, tanjakan cenderung lebih pelan dan t
 
 Opsi yang memerlukan elevasi dinonaktifkan jika GPX tidak memiliki data elevasi yang dapat digunakan. Pada GPX dengan elevasi sebagian, pengaruh medan hanya dihitung dalam rangkaian titik yang memiliki elevasi, tanpa menjembatani data hilang atau pergantian segmen.
 
+## Akun, pembayaran, dan profil demo
+
+Tombol **Buat Aktivitas Sekarang** dan **Ruang Pelayanan** meminta login. `login.html` menyediakan akun PNS, pendaftaran empat isian (nama, username, email, password), serta pemilih identitas **Gmail demo**. Gmail demo tidak terhubung ke Google/OAuth dan tidak meminta password Gmail.
+
+| Username | Password awal | Email contoh |
+| --- | --- | --- |
+| `pelari` | `PnsDemo123!` | `pelari@example.com` |
+| `sahabat` | `PnsDemo456!` | `sahabat@example.com` |
+
+Gunakan data contoh. Akun disimpan di `localStorage`, password berupa hash PBKDF2 dengan salt, dan sesi aktif di `sessionStorage`. Profil serta riwayat belum tersinkron antargawai. Ini prototipe browser, bukan autentikasi atau kontrol pembayaran yang aman untuk produksi. Menghapus data situs menghapus akun, profil, riwayat, dan pemakaian voucher lokal.
+
+Setiap klik **Lanjutkan Unduh TCX** membuka pesanan baru Rp5.000 untuk snapshot aktivitas saat itu. Pengguna bisa:
+
+- Melihat salah satu dari empat QR contoh acak, lalu menekan **Simulasikan Pembayaran Berhasil**. QR hanya memuat teks demo, tidak bisa menerima uang.
+- Memasukkan `PNSCOBA5000` atau `PNSSAHABAT`. Masing-masing menggantikan biaya satu unduhan, satu kali per akun demo.
+
+Konfirmasi berhasil langsung memulai unduhan TCX dan mencatat riwayat. Voucher salah/sudah dipakai serta pembatalan tidak memulai unduhan. Satu pesanan hanya bisa dikonfirmasi sekali. Tidak ada transaksi, verifikasi pembayaran sungguhan, atau layanan penerbitan voucher server.
+
+`profil.html` menyediakan ubah nama, ganti password akun PNS demo, logout, serta maksimal 100 ringkasan rute dan 100 unduhan terakhir per akun. Rute dicatat saat GPX berhasil diunggah, unduhan saat pembayaran/voucher demo dikonfirmasi. File GPX/TCX tidak diarsipkan di penyimpanan akun.
+
 ## Struktur
 
 ```text
 dist/
   index.html          # Beranda
-  pelayanan.html      # Generator simulasi
+  pelayanan.html      # Generator simulasi, memerlukan sesi demo
+  login.html          # Login PNS/Gmail demo dan pendaftaran
+  profil.html         # Pengaturan akun dan riwayat
+  portal.js           # Akun lokal, sesi, checkout demo, dan riwayat
+  portal.css          # Halaman akun dan dialog pembayaran
   app.js              # Parser GPX, simulasi, grafik, dan ekspor TCX
   site.js             # Tema beranda dan navigasi
   site.css            # Identitas visual dan beranda
@@ -65,13 +89,14 @@ tests/                # Pengujian logika dan rute sintetis
 node --check dist/app.js
 node --check dist/site.js
 node tests/smoke.cjs
+node tests/portal.cjs
 ```
 
 Pengujian mencakup semua kombinasi sensor, delapan kombinasi opsi hubungan pace/HR/elevasi, durasi dan jarak yang tetap, estimasi kalori, elevasi lengkap/hilang/sebagian, endpoint dan split parsial, variasi HR/cadence, serta metadata TCX. Fixture GPX bersifat sintetis. Ekspor juga telah diperiksa terhadap skema resmi TrainingCenterDatabase v2 dan ActivityExtension v2.
 
 ## Catatan
 
-File GPX diproses di browser tanpa diunggah ke backend. Leaflet dan OpenStreetMap digunakan untuk peta online. Hasil TCX berupa simulasi, bukan rekaman perangkat nyata. Tampilan dan perhitungan setelah diimpor ke layanan lain dapat berbeda; impor langsung ke Strava atau Zepp belum diuji. Namespace `garmin.com/xmlschemas` adalah bagian standar TCX, bukan pilihan perangkat Garmin.
+File GPX diproses di browser tanpa diunggah ke backend. Ringkasan rute dan unduhan disimpan lokal untuk riwayat akun demo. Leaflet dan OpenStreetMap digunakan untuk peta online. Hasil TCX berupa simulasi, bukan rekaman perangkat nyata. Tampilan dan perhitungan setelah diimpor ke layanan lain dapat berbeda; impor langsung ke Strava atau Zepp belum diuji. Namespace `garmin.com/xmlschemas` adalah bagian standar TCX, bukan pilihan perangkat Garmin.
 
 ## Referensi estimasi
 
