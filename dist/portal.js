@@ -52,6 +52,7 @@ async function register(values){
 }
 async function demoGoogle(id){await ready;const u=read().users.find(x=>x.id===id&&DEMOS.some(d=>d.id===id));if(!u)throw Error('Akun contoh tidak tersedia.');sessionStorage.setItem(SESSION_KEY,JSON.stringify({userId:u.id}));return publicUser(u);}
 function logout(){sessionStorage.removeItem(SESSION_KEY);orders.clear();}
+function leaveAccount(){logout();location.replace('index.html');}
 async function updateName(value){await ready;const data=read(),u=requireUser(data);u.name=validateName(value);write(data);return publicUser(u);}
 async function changePassword(current,password){
  await ready;validatePassword(password);const data=read(),u=requireUser(data);
@@ -89,7 +90,8 @@ function status(id,message,ok=false){const el=byId(id);if(!el)return;el.textCont
 function updateNav(){
  const nav=document.querySelector('.site-header nav');if(!nav)return;
  let link=byId('accountNav');if(!link){link=document.createElement('a');link.id='accountNav';nav.appendChild(link);}
- const u=user();link.href=u?'profil.html':'login.html';link.textContent=u?'Profil Saya':'Masuk';if(location.pathname.endsWith('/profil.html'))link.setAttribute('aria-current','page');
+ let exit=byId('logoutNav');if(!exit){exit=document.createElement('button');exit.id='logoutNav';exit.type='button';exit.className='account-logout';exit.textContent='Keluar';exit.setAttribute('aria-label','Keluar dari akun PNS');exit.addEventListener('click',leaveAccount);nav.appendChild(exit);}
+ const u=user();exit.hidden=!u;link.href=u?'profil.html':'login.html';link.textContent=u?'Profil Saya':'Masuk';if(location.pathname.endsWith('/profil.html'))link.setAttribute('aria-current','page');
  document.querySelectorAll('a[href="pelayanan.html"],a[href="login.html?next=pelayanan.html"]').forEach(a=>{a.href=u?'pelayanan.html':'login.html?next=pelayanan.html';});
 }
 async function submitForm(form,handler,errorId){
@@ -123,7 +125,7 @@ function renderProfile(){
 }
 function initProfile(){
  if(!byId('profileForm')||!user())return;
- renderProfile();byId('logoutButton').addEventListener('click',()=>{logout();location.assign('index.html');});
+ renderProfile();byId('logoutButton').addEventListener('click',leaveAccount);
  byId('profileForm').addEventListener('submit',e=>{e.preventDefault();submitForm(e.currentTarget,async()=>{await updateName(byId('profileName').value);renderProfile();status('profileStatus','Nama berhasil diperbarui.',true);},'profileStatus');});
  byId('passwordForm').addEventListener('submit',e=>{e.preventDefault();submitForm(e.currentTarget,async()=>{if(byId('newPassword').value!==byId('confirmPassword').value)throw Error('Konfirmasi password belum sama.');await changePassword(byId('currentPassword').value,byId('newPassword').value);e.target.reset();status('passwordStatus','Password akun PNS demo berhasil diganti.',true);},'passwordStatus');});
 }
@@ -161,5 +163,5 @@ async function requestDownload(meta,deliver){
 window.PNSPortal=Object.freeze({ready,user,login,register,demoGoogle,logout,updateName,changePassword,saveRoute,history,createCheckout,cancelCheckout,settleCheckout,requestDownload,safeNext});
 document.addEventListener('DOMContentLoaded',()=>{updateNav();initLogin();initPayment();ready.then(()=>{updateNav();initProfile();}).catch(e=>{status('loginStatus',e.message);status('registerStatus',e.message);status('profileStatus',e.message);});});
 // Recheck access when returning from the browser's back/forward cache.
-window.addEventListener('pageshow',()=>{if(document.documentElement.hasAttribute('data-pns-private')&&!user())location.replace('login.html?next='+safeNext(location.pathname.split('/').pop()));});
+window.addEventListener('pageshow',()=>{updateNav();if(document.documentElement.hasAttribute('data-pns-private')&&!user())location.replace('login.html?next='+safeNext(location.pathname.split('/').pop()));});
 })();

@@ -35,7 +35,7 @@ const meta={filename:'Lari Pagi.tcx',name:'Lari & Pagi <contoh>',distance:5000,p
  api.logout();await api.demoGoogle('demo-sahabat');assert.equal(api.user().username,'sahabat');await assert.rejects(api.demoGoogle('missing'),/tidak tersedia/);
  const saved=local.get('pns-demo-portal-v1');assert(!saved.includes('PnsDemo123!'));assert(!saved.includes('NewDemo123!'));assert(!saved.includes('TestNew123!'));
  const pages=['index.html','pelayanan.html','login.html','profil.html'].map(path=>fs.readFileSync('dist/'+path,'utf8'));
- pages.forEach(html=>{assert(html.includes('portal.js?v=1'));assert(html.includes('portal.css?v=1'));});assert(pages[1].includes('data-pns-private'));assert(pages[3].includes('data-pns-private'));
+ pages.forEach(html=>{assert(html.includes('portal.js?v=2'));assert(html.includes('portal.css?v=2'));});assert(pages[1].includes('data-pns-private'));assert(pages[3].includes('data-pns-private'));
  assert(pages[1].includes('Jangan transfer uang'));assert(pages[1].includes('role="tablist"'));assert(pages[2].includes('tidak terhubung ke Google'));
  console.log('PASS: guest gating, safe redirects, both example accounts, registration, Gmail demo, profile changes, hashed passwords and per-account histories.');
  console.log('PASS: QR demo price, two vouchers, invalid/reused voucher rejection, canceled/duplicate orders, account switching and write failure without voucher loss.');

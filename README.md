@@ -62,6 +62,8 @@ Setiap klik **Lanjutkan Unduh TCX** membuka pesanan baru Rp5.000 untuk snapshot 
 
 Konfirmasi berhasil langsung memulai unduhan TCX dan mencatat riwayat. Voucher salah/sudah dipakai serta pembatalan tidak memulai unduhan. Satu pesanan hanya bisa dikonfirmasi sekali. Tidak ada transaksi, verifikasi pembayaran sungguhan, atau layanan penerbitan voucher server.
 
+Tombol **Keluar** tersedia di navigasi setiap halaman saat login (di HP, buka menu navigasi), serta di halaman profil. Logout menghapus sesi aktif dan kembali ke beranda; profil dan riwayat lokal tetap tersimpan.
+
 `profil.html` menyediakan ubah nama, ganti password akun PNS demo, logout, serta maksimal 100 ringkasan rute dan 100 unduhan terakhir per akun. Rute dicatat saat GPX berhasil diunggah, unduhan saat pembayaran/voucher demo dikonfirmasi. File GPX/TCX tidak diarsipkan di penyimpanan akun.
 
 ## Struktur
