@@ -30,7 +30,8 @@ Jika seluruh halaman menampilkan 404, pastikan deployment terbaru menggunakan co
 - Tema terang/gelap dan tata letak responsif.
 - Unggah GPX; atur tanggal, waktu mulai WIB, pace, variasi, dan split.
 - Estimasi kalori menggunakan berat badan, usia, dan pilihan jenis kelamin; tetap dihitung tanpa HR.
-- HR dan cadence opsional, dengan variasi sintetis yang mengikuti perubahan pace dan gradien. Saat dimatikan, data tidak disertakan dalam TCX.
+- HR dan cadence opsional, dengan variasi sintetis bertahap. Saat dimatikan, data tidak disertakan dalam TCX.
+- Tiga opsi terpisah, semuanya nonaktif secara default: pace mengikuti elevasi, HR mengikuti pace, dan HR mengikuti elevasi.
 - Detail Aktivitas di atas Strava Preview yang ringkas dan dapat ditutup.
 - Peta, split, serta grafik pace, elevasi, HR, dan cadence dengan tooltip mengikuti kursor.
 - Ekspor TCX dengan kalori dan elevasi dari GPX jika tersedia.
@@ -38,6 +39,10 @@ Jika seluruh halaman menampilkan 404, pastikan deployment terbaru menggunakan co
 Kalori memakai MET berdasarkan pace, berat, dan durasi jika HR dimatikan atau jenis kelamin tidak dipilih. Jika HR aktif dan jenis kelamin dipilih, estimasi memakai formula HR Keytel dengan profil pengguna. Semua angka merupakan estimasi untuk data simulasi.
 
 Elevasi mengikuti GPX; data yang hilang tidak dibuat-buat. Nilai di antara titik GPX diinterpolasi. Total tanjakan dan turunan tidak menjembatani segmen yang terpisah.
+
+Saat **pace mengikuti elevasi** diaktifkan, tanjakan cenderung lebih pelan dan turunan lebih cepat; pace rata-rata serta total durasi tetap sesuai input. **HR mengikuti pace** memberi respons bertahap terhadap perubahan kecepatan. **HR mengikuti elevasi** memberi pengaruh tanjakan/turunan sehingga HR dapat naik saat menanjak meski pace melambat. Kedua pengaruh HR dapat dipakai bersama atau dimatikan untuk pola HR mandiri, dengan rentang dan rata-rata tetap mengikuti pengaturan. Ini model sintetis, bukan prediksi fisiologis pengguna.
+
+Opsi yang memerlukan elevasi dinonaktifkan jika GPX tidak memiliki data elevasi yang dapat digunakan. Pada GPX dengan elevasi sebagian, pengaruh medan hanya dihitung dalam rangkaian titik yang memiliki elevasi, tanpa menjembatani data hilang atau pergantian segmen.
 
 ## Struktur
 
@@ -62,7 +67,7 @@ node --check dist/site.js
 node tests/smoke.cjs
 ```
 
-Pengujian mencakup semua kombinasi sensor, estimasi kalori, elevasi lengkap/hilang, endpoint dan split parsial, variasi HR/cadence, serta metadata TCX. Fixture GPX bersifat sintetis. Ekspor juga telah diperiksa terhadap skema resmi TrainingCenterDatabase v2 dan ActivityExtension v2.
+Pengujian mencakup semua kombinasi sensor, delapan kombinasi opsi hubungan pace/HR/elevasi, durasi dan jarak yang tetap, estimasi kalori, elevasi lengkap/hilang/sebagian, endpoint dan split parsial, variasi HR/cadence, serta metadata TCX. Fixture GPX bersifat sintetis. Ekspor juga telah diperiksa terhadap skema resmi TrainingCenterDatabase v2 dan ActivityExtension v2.
 
 ## Catatan
 

@@ -279,6 +279,60 @@ function simulateSpeeds(totalDist, avgPaceSecPerKm, variancePct, splitPct, seed)
   return speeds; // per-indeks, bukan per-meter
 }
 
+// Smoothed grades stay within continuous GPX runs; missing elevations and segment gaps stay unknown.
+const terrainModels=new WeakMap();
+function buildTerrainModel(gpx) {
+  if(!gpx)return {runs:[],hasElevation:false,complete:false};
+  if(terrainModels.has(gpx))return terrainModels.get(gpx);
+  const runs=[];let run=null,covered=0;
+  for(const point of gpx.allPts){
+    if(!Number.isFinite(point.ele)){run=null;continue;}
+    const last=run&&run.at(-1);
+    if(!last||point.segmentIndex!==last.segmentIndex||point.cumDist<=last.cumDist){run=[];runs.push(run);}
+    if(run.length)covered+=point.cumDist-run.at(-1).cumDist;
+    run.push(point);
+  }
+  const model={runs:runs.filter(r=>r.length>=2),hasElevation:covered>0,complete:covered>=gpx.totalDist-.01};
+  terrainModels.set(gpx,model);return model;
+}
+function terrainGradeAtDistance(model,distance) {
+  if(!model||!model.runs.length)return null;
+  const runs=model.runs;let lo=0,hi=runs.length;
+  while(lo<hi){const mid=(lo+hi)>>1;if(runs[mid][0].cumDist<=distance)lo=mid+1;else hi=mid;}
+  const run=runs[Math.max(0,lo-1)];
+  if(distance<run[0].cumDist||distance>run.at(-1).cumDist)return null;
+  const from=Math.max(run[0].cumDist,distance-30),to=Math.min(run.at(-1).cumDist,distance+30);
+  if(to-from<1)return null;
+  function elevation(d){
+    let l=0,h=run.length-1;while(l<h-1){const m=(l+h)>>1;if(run[m].cumDist<=d)l=m;else h=m;}
+    const a=run[l],b=run[h],t=(d-a.cumDist)/(b.cumDist-a.cumDist);return a.ele+(b.ele-a.ele)*t;
+  }
+  return clamp((elevation(to)-elevation(from))/(to-from),-.25,.25);
+}
+function applyTerrainToSpeeds(speeds,totalDist,avgPaceSecPerKm,terrain) {
+  if(!terrain.hasElevation)return speeds;
+  const result=new Float64Array(speeds.length);let inverseSum=0;
+  for(let i=0;i<speeds.length;i++){
+    const grade=terrainGradeAtDistance(terrain,(i+.5)*totalDist/speeds.length);
+    const factor=grade===null?1:clamp(Math.exp(-3.5*grade),.65,1.3);
+    result[i]=Math.max(.3,speeds[i]*factor);inverseSum+=1/result[i];
+  }
+  // Equal-distance samples use the harmonic mean: preserve the user's total duration and average pace.
+  const scale=(1000/avgPaceSecPerKm)*inverseSum/result.length;
+  for(let i=0;i<result.length;i++)result[i]*=scale;
+  return result;
+}
+function syncTerrainOptions() {
+  const terrain=buildTerrainModel(state.gpx),available=terrain.hasElevation;
+  document.getElementById('paceFollowElevation').disabled=!available;
+  document.getElementById('hrFollowElevation').disabled=!available;
+  const message=!state.gpx?'Unggah GPX dengan elevasi untuk mengaktifkan opsi elevasi.':
+    !available?'GPX ini tidak memiliki data elevasi yang dapat digunakan. Pengaturan biasa tetap berlaku.':
+    !terrain.complete?'Data elevasi tersedia sebagian. Opsi hanya bekerja pada bagian yang memiliki data.':
+    'Data elevasi tersedia. Opsi mengikuti elevasi bisa diaktifkan.';
+  document.getElementById('terrainAvailability').textContent=message;
+}
+
 // Seeded synthetic signals: shared effort, lagged HR, and cadence with local rhythm variation.
 // These curves are an illustration, not a physiological measurement model.
 function calibrateSignal(values,target,min,max,weights,timeWeights) {
@@ -292,14 +346,15 @@ function calibrateSignal(values,target,min,max,weights,timeWeights) {
   const offset=(lo+hi)/2;
   return values.map((v,i)=>Math.round(clamp(v+offset*weights[i],min,max)));
 }
-function generateSensorSignals(points,settings) {
+function generateSensorSignals(points,settings,terrain) {
+  const followPace=settings.hrFollowPace===true,followElevation=settings.hrFollowElevation===true&&!!terrain?.hasElevation;
   const hrOn=settings.hrEnabled!==false,cadOn=settings.cadEnabled!==false;
   if(!hrOn&&!cadOn)return;
   const rng=seededRng(settings.seed+17.031),rngCad=seededRng(settings.seed+39.127);
   const duration=points.at(-1).sec||1,baseSpeed=1000/settings.avgPaceSecPerKm;
   const range=Math.max(0,settings.hrMax-settings.hrMin),warmTime=Math.min(85,Math.max(15,duration*.14));
   const hrRaw=[],cadRaw=[],weights=[],timeWeights=[];
-  let hr=settings.hrMin+range*.07,hrSlow=0,hrShort=0,cadSlow=0,cadShort=0,slope=0,effort=0;
+  let hr=settings.hrMin+range*.07,hrSlow=0,hrShort=0,cadSlow=0,cadShort=0,slope=0,hrSlope=0,effort=0;
   let regime=0,cadRegime=0,nextRegime=0,nextCadRegime=0;
   const noise=random=>(random()+random()+random()-1.5)*1.4;
   for(let i=0;i<points.length;i++){
@@ -312,13 +367,15 @@ function generateSensorSignals(points,settings) {
       ?clamp((p.ele-prev.ele)/(p.dist-prev.dist),-.12,.12):0;
     slope+=(rawGrade-slope)*(1-Math.exp(-dt/12));
     effort+=((p.speed/baseSpeed-1)-effort)*(1-Math.exp(-dt/8));
+    const hrGrade=followElevation?(terrainGradeAtDistance(terrain,p.dist)??0):0;
+    hrSlope+=(hrGrade-hrSlope)*(1-Math.exp(-dt/12));
     const hs=Math.exp(-dt/20),hf=Math.exp(-dt/2.5),cs=Math.exp(-dt/13),cf=Math.exp(-dt/1.8);
     hrSlow=hs*hrSlow+Math.sqrt(1-hs*hs)*noise(rng);
     hrShort=hf*hrShort+Math.sqrt(1-hf*hf)*noise(rng);
     cadSlow=cs*cadSlow+Math.sqrt(1-cs*cs)*noise(rngCad);
     cadShort=cf*cadShort+Math.sqrt(1-cf*cf)*noise(rngCad);
     const drift=range*.07*(p.sec/duration-.4);
-    const target=settings.hrAvg+effort*23+slope*55+regime*range*.12+hrSlow*range*.09+drift;
+    const target=settings.hrAvg+(followPace?effort*23:0)+(followElevation?hrSlope*160:0)+regime*range*.12+hrSlow*range*.09+drift;
     hr+=(target-hr)*(1-Math.exp(-dt/(24+warmTime*.15)));
     hrRaw.push(clamp(hr+hrShort*range*.045,settings.hrMin,settings.hrMax));
     cadRaw.push(settings.cadAvg+(p.speed/baseSpeed-1)*24+slope*38+cadRegime+cadSlow*1.9+cadShort*1.8);
@@ -402,7 +459,9 @@ function runSimulation(gpx, settings) {
   const hrEnabled=settings.hrEnabled!==false,cadEnabled=settings.cadEnabled!==false;
 
   // Simulasikan kecepatan
-  const speedProfile = simulateSpeeds(totalDist, avgPaceSecPerKm, variancePct, splitPct, seed);
+  const terrain=buildTerrainModel(gpx);
+  let speedProfile = simulateSpeeds(totalDist, avgPaceSecPerKm, variancePct, splitPct, seed);
+  if(settings.paceFollowElevation===true) speedProfile=applyTerrainToSpeeds(speedProfile,totalDist,avgPaceSecPerKm,terrain);
   const N = speedProfile.length;
 
   // Simulasikan HR & cadence
@@ -456,7 +515,7 @@ function runSimulation(gpx, settings) {
       : 0;
     const idx = clamp(Math.floor(lo2 + t), 0, N - 1);
 
-    const dist = clamp(lo2 * distPerSample + t * distPerSample, 0, totalDist);
+    const dist = tSec >= totalDurSec - 1e-9 ? totalDist : clamp(lo2 * distPerSample + t * distPerSample, 0, totalDist);
     const pos = interpolatePos(dist);
     const speed = speedProfile[idx];
     const hr = null;
@@ -481,7 +540,7 @@ function runSimulation(gpx, settings) {
     trackpoints.push({ sec: totalSecs, utcMs: startUtcMs + totalSecs * 1000, dist, lat: pos.lat, lon: pos.lon, ele: pos.ele, speed, hr, cad });
   }
 
-  generateSensorSignals(trackpoints,settings);
+  generateSensorSignals(trackpoints,settings,terrain);
 
   // Hitung split per km
   const splits = [];
@@ -995,9 +1054,11 @@ function initPreviewControls() {
   const syncSensors=()=>{
     document.getElementById('hrFields').disabled=!document.getElementById('hrEnabled').checked;
     document.getElementById('cadFields').disabled=!document.getElementById('cadEnabled').checked;
+    syncTerrainOptions();
     scheduleUpdate();
   };
   ['hrEnabled','cadEnabled'].forEach(id=>document.getElementById(id).addEventListener('change',syncSensors));syncSensors();
+  ['paceFollowElevation','hrFollowPace','hrFollowElevation'].forEach(id=>document.getElementById(id).addEventListener('change',scheduleUpdate));
   let frame=null,pending=null;
   const fromPointer=(id,e)=>{
     if(!state.sim)return;
@@ -1075,6 +1136,9 @@ function getSettings() {
     age: Number(document.getElementById('age').value),
     sex: document.getElementById('sex').value,
     hrEnabled: document.getElementById('hrEnabled').checked,
+    hrFollowPace: document.getElementById('hrEnabled').checked && document.getElementById('hrFollowPace').checked,
+    hrFollowElevation: document.getElementById('hrEnabled').checked && !document.getElementById('hrFollowElevation').disabled && document.getElementById('hrFollowElevation').checked,
+    paceFollowElevation: !document.getElementById('paceFollowElevation').disabled && document.getElementById('paceFollowElevation').checked,
     cadEnabled: document.getElementById('cadEnabled').checked,
     variancePct: Number(document.getElementById('paceVar').value),
     splitPct: Number(document.getElementById('paceSplit').value),
@@ -1114,6 +1178,7 @@ function scheduleUpdate() {
 function doUpdate(keepSeed = true) {
   if (!keepSeed) state.varianceSeed = Math.random();
 
+  syncTerrainOptions();
   const settings = getSettings();
   const hrErr = document.getElementById('hrError');
 

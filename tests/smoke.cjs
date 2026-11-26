@@ -35,7 +35,7 @@ console.log('PASS: all sensor combinations; nonzero calories with HR off; weight
 const longRoute={totalDist:5000,allPts:[{lat:0,lon:0,ele:0,cumDist:0,segmentIndex:0},{lat:.02,lon:0,ele:40,cumDist:2500,segmentIndex:0},{lat:.04,lon:0,ele:10,cumDist:5000,segmentIndex:0}]};
 const variance=values=>{const avg=values.reduce((s,v)=>s+v,0)/values.length;return values.reduce((s,v)=>s+(v-avg)**2,0)/values.length;};
 for(const seed of [.1,.45,.9]){
- const opts={...profile,seed},r=context.runSimulation(longRoute,opts),again=context.runSimulation(longRoute,opts);
+ const opts={...profile,seed,hrFollowPace:true,hrFollowElevation:true},r=context.runSimulation(longRoute,opts),again=context.runSimulation(longRoute,opts);
  assert.deepEqual(r.trackpoints,again.trackpoints);assert(Math.abs(r.stats.avgHr-profile.hrAvg)<=1);assert(Math.abs(r.stats.avgCad-profile.cadAvg)<=1);
  assert(new Set(r.trackpoints.map(p=>p.hr)).size>=12);assert(new Set(r.trackpoints.map(p=>p.cad)).size>=12);assert(variance(r.trackpoints.map(p=>p.hr))>4);assert(variance(r.trackpoints.map(p=>p.cad))>3);
  assert(r.trackpoints.every(p=>p.hr>=profile.hrMin&&p.hr<=profile.hrMax&&p.cad>=60&&p.cad<=300));
@@ -44,3 +44,29 @@ for(const seed of [.1,.45,.9]){
 }
 const markup=fs.readFileSync('dist/pelayanan.html','utf8');assert(markup.indexOf('id="activityDetails"')>markup.indexOf('class="col-right"'));assert(markup.indexOf('id="activityDetails"')<markup.indexOf('id="summaryCard"'));assert(markup.includes('aria-controls="previewBody"'));assert(markup.includes('class="chart-tooltip"'));assert((fs.readFileSync('dist/index.html','utf8').match(/https:\/\/onthegomap.com\/#\/create/g)||[]).length>=2);
 console.log('PASS: varied reproducible HR/cadence, stable means and bounds, response to pace changes, detail above collapsible preview, tooltip containers, route-planner links.');
+// Opt-in relationships must change terrain behavior without changing distance or target duration.
+const hill={totalDist:6000,allPts:[{lat:0,lon:0,ele:0,cumDist:0,segmentIndex:0},{lat:.01,lon:0,ele:0,cumDist:1000,segmentIndex:0},{lat:.02,lon:0,ele:70,cumDist:2000,segmentIndex:0},{lat:.03,lon:0,ele:70,cumDist:3000,segmentIndex:0},{lat:.04,lon:0,ele:0,cumDist:4000,segmentIndex:0},{lat:.05,lon:0,ele:0,cumDist:5000,segmentIndex:0},{lat:.06,lon:0,ele:0,cumDist:6000,segmentIndex:0}]};
+const baseOptions={...profile,variancePct:0,splitPct:0,seed:.51,paceFollowElevation:false,hrFollowPace:false,hrFollowElevation:false};
+const independent=context.runSimulation(hill,baseOptions);
+const changingPace=context.runSimulation(hill,{...baseOptions,variancePct:20});
+assert.deepEqual(independent.trackpoints.map(p=>p.hr),changingPace.trackpoints.map(p=>p.hr),'Independent HR should not follow changes in pace');
+for(const paceFollowElevation of [false,true])for(const hrFollowPace of [false,true])for(const hrFollowElevation of [false,true]){
+ const opts={...baseOptions,paceFollowElevation,hrFollowPace,hrFollowElevation},r=context.runSimulation(hill,opts);
+ assert.equal(r.stats.totalDist,6000);assert.equal(r.stats.totalDurSec,2520);assert.equal(r.trackpoints.at(-1).dist,6000);assert(Math.abs(r.stats.avgHr-profile.hrAvg)<=1);
+ assert(r.trackpoints.every(p=>Number.isFinite(p.speed)&&p.speed>0&&p.hr>=profile.hrMin&&p.hr<=profile.hrMax));
+ assert.equal(context.runSimulation(hill,opts).stats.totalDurSec,r.stats.totalDurSec);
+ const avg=(from,to,key)=>{const pts=r.trackpoints.filter(p=>p.dist>=from&&p.dist<=to);return pts.reduce((sum,p)=>sum+p[key],0)/pts.length;};
+ if(paceFollowElevation)assert(avg(1300,1900,'speed')<avg(3300,3900,'speed'),'Uphill should be slower than downhill');
+ if(hrFollowElevation)assert(avg(1300,1900,'hr')>avg(3300,3900,'hr'),'HR should remain higher uphill, including with slower uphill pace');
+ if(!paceFollowElevation)assert.deepEqual(r.trackpoints.map(p=>p.speed),independent.trackpoints.map(p=>p.speed));
+ const xml=context.generateTCX(r,opts);assert(xml.includes('<Name>Amazfit Active Edge</Name>'));assert(!xml.includes('NaN'));
+}
+const withoutElevation={...hill,allPts:hill.allPts.map(p=>({...p,ele:null}))};
+const missingBaseline=context.runSimulation(withoutElevation,baseOptions);
+const missingFollow=context.runSimulation(withoutElevation,{...baseOptions,paceFollowElevation:true,hrFollowElevation:true});
+assert.deepEqual(missingBaseline.trackpoints,missingFollow.trackpoints,'Missing elevation should fall back without invented terrain');
+assert(Math.abs(context.terrainGradeAtDistance(context.buildTerrainModel(gap),500)-.02)<1e-9,'No artificial slope across disjoint GPX segments');
+const incomplete={totalDist:300,allPts:[{lat:0,lon:0,cumDist:0,ele:0},{lat:.001,lon:0,cumDist:100,ele:10},{lat:.002,lon:0,cumDist:200,ele:null},{lat:.003,lon:0,cumDist:300,ele:50}]};
+const terrain=context.buildTerrainModel(incomplete);assert(terrain.hasElevation);assert(!terrain.complete);assert.equal(context.terrainGradeAtDistance(terrain,200),null);
+const home=fs.readFileSync('dist/index.html','utf8');assert(home.includes('Buat Aktivitas Sekarang'));assert(home.includes('Your Control.'));assert(home.includes('KENAPA PNS?'));assert(!home.includes('kaum rebahan'));assert(!home.includes('Pelayanan sepenuh pace.'));assert(home.includes('tidak berafiliasi dengan Strava'));assert(!home.includes('href="#"'));
+console.log('PASS: 8 independent opt-in combinations, independent HR, slower uphill/faster downhill, higher uphill/lower downhill HR, preserved target duration and distance, missing/partial/disjoint elevation, current product copy.');

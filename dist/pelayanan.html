@@ -7,7 +7,7 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏃</text></svg>"/>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <link rel="stylesheet" href="tool.css?v=3"/>
-<link rel="stylesheet" href="site.css?v=3"/><link rel="stylesheet" href="preview.css?v=3"/><meta name="description" content="Ruang Pelayanan PNS: buat simulasi TCX lari dari rute GPX dengan profil Amazfit Active Edge."/></head>
+<link rel="stylesheet" href="site.css?v=5"/><link rel="stylesheet" href="preview.css?v=5"/><meta name="description" content="Ruang Pelayanan PNS: buat simulasi TCX lari dari rute GPX dengan profil Amazfit Active Edge."/></head>
 <body>
 
 <!-- HEADER -->
@@ -98,6 +98,7 @@
           <span>Positif · makin lambat</span>
         </div>
       </div>
+      <div class="follow-options"><label class="follow-option"><input type="checkbox" id="paceFollowElevation" disabled><span><strong>Pace mengikuti elevasi</strong><small>Tanjakan cenderung lebih pelan, turunan lebih cepat. Pace rata-rata tetap sesuai input.</small></span></label><p class="form-hint" id="terrainAvailability" aria-live="polite">Unggah GPX dengan elevasi untuk mengaktifkan opsi elevasi.</p></div>
     </section>
 
     <section class="card profile-card">
@@ -110,7 +111,7 @@
     <section class="card sensor-card">
       <div class="card-header"><h2>Detak jantung &amp; cadence</h2><span class="optional-label">Opsional</span></div>
       <label class="sensor-toggle" for="hrEnabled"><span><strong>Gunakan detak jantung</strong><small>Sertakan HR di pratinjau dan TCX.</small></span><input type="checkbox" id="hrEnabled" role="switch" checked></label>
-      <fieldset id="hrFields"><legend class="sr-only">Pengaturan detak jantung</legend><div class="form-row three-col"><div class="form-group"><label for="hrMin">HR minimum</label><div class="input-unit-wrap"><input type="number" id="hrMin" value="142" min="40" max="220"><span class="unit">bpm</span></div></div><div class="form-group"><label for="hrAvg">HR rata-rata</label><div class="input-unit-wrap"><input type="number" id="hrAvg" value="158" min="40" max="220"><span class="unit">bpm</span></div></div><div class="form-group"><label for="hrMax">HR maksimum</label><div class="input-unit-wrap"><input type="number" id="hrMax" value="175" min="40" max="220"><span class="unit">bpm</span></div></div></div></fieldset>
+      <fieldset id="hrFields"><legend class="sr-only">Pengaturan detak jantung</legend><div class="form-row three-col"><div class="form-group"><label for="hrMin">HR minimum</label><div class="input-unit-wrap"><input type="number" id="hrMin" value="142" min="40" max="220"><span class="unit">bpm</span></div></div><div class="form-group"><label for="hrAvg">HR rata-rata</label><div class="input-unit-wrap"><input type="number" id="hrAvg" value="158" min="40" max="220"><span class="unit">bpm</span></div></div><div class="form-group"><label for="hrMax">HR maksimum</label><div class="input-unit-wrap"><input type="number" id="hrMax" value="175" min="40" max="220"><span class="unit">bpm</span></div></div></div><div class="follow-options"><label class="follow-option"><input type="checkbox" id="hrFollowPace"><span><strong>HR mengikuti pace</strong><small>HR merespons perubahan kecepatan secara bertahap.</small></span></label><label class="follow-option"><input type="checkbox" id="hrFollowElevation" disabled><span><strong>HR mengikuti elevasi</strong><small>Tanjakan dapat menaikkan HR meski pace melambat; turunan dapat menurunkannya meski lebih cepat.</small></span></label><p class="form-hint">Opsional. Matikan keduanya untuk pola HR mandiri. HR tetap mengikuti rentang dan rata-rata yang kamu atur.</p></div></fieldset>
       <label class="sensor-toggle" for="cadEnabled"><span><strong>Gunakan cadence</strong><small>Sertakan langkah per menit di pratinjau dan TCX.</small></span><input type="checkbox" id="cadEnabled" role="switch" checked></label>
       <fieldset id="cadFields"><legend class="sr-only">Pengaturan cadence</legend><div class="form-group"><label for="cadAvg">Cadence rata-rata</label><div class="input-unit-wrap"><input type="number" id="cadAvg" value="165" min="100" max="250"><span class="unit">langkah/menit</span></div><p class="form-hint">Total langkah kedua kaki.</p></div></fieldset>
       <div class="validation-msg error" id="hrError" role="alert" style="display:none"></div>
@@ -216,6 +217,6 @@
 </main>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<footer class="site-footer"><div class="footer-inner"><a class="footer-brand" href="index.html">PNS<span>.</span> <small>Pegawai Negeri Strava</small></a><p>Mengabdi untuk Pace dan Speed.</p><span>© 2026 PNS</span></div></footer><script src="app.js?v=4"></script><script src="site.js"></script>
+<footer class="site-footer footer-expanded"><div class="footer-inner"><div class="footer-identity"><a class="footer-brand" href="index.html">PNS<span>.</span> <small>Pegawai Negeri Strava</small></a><p>Mengabdi untuk Pace dan Speed.</p><p class="footer-note">PNS merupakan layanan independen dan tidak berafiliasi dengan Strava.</p></div><div class="footer-information"><h2>Informasi</h2><nav aria-label="Informasi PNS"><a href="index.html#tentang">Tentang PNS</a><a href="index.html#informasi">Pusat Bantuan</a><span>Kebijakan Privasi <small>Segera hadir</small></span><span>Syarat dan Ketentuan <small>Segera hadir</small></span><span>Hubungi Kami <small>Segera hadir</small></span></nav></div></div><div class="footer-bottom">© 2026 PNS. All rights reserved.</div></footer><script src="app.js?v=5"></script><script src="site.js"></script>
 </body>
 </html>
